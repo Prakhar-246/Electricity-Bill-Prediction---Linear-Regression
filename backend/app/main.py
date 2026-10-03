@@ -1,5 +1,9 @@
+import os
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from .model.model_loader import get_model, get_scaler, validate_schema
 from .model.preprocessing import (
@@ -13,17 +17,16 @@ from .schemas import OptionsResponse, PredictionRequest, PredictionResponse
 app = FastAPI(
     title="Electricity Bill Prediction API",
     description=(
-        "Serves the existing (unmodified) Linear Regression model + "
-        "StandardScaler trained in Electricity.ipynb."
+        "Serves the Linear Regression model + StandardScaler trained in Electricity.ipynb."
     ),
     version="1.0.0",
 )
 
-# Dev-friendly CORS for a locally-run Vite React app. Tighten this to your
-# real frontend origin(s) before deploying anywhere public.
+# Open CORS so frontend works seamlessly on localhost and any deployed live URL
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -38,7 +41,7 @@ def on_startup() -> None:
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "message": "Electricity Bill Prediction API is healthy"}
 
 
 @app.get("/options", response_model=OptionsResponse)
@@ -71,11 +74,29 @@ def predict(req: PredictionRequest):
     model = get_model()
 
     scaled = scaler.transform(vector)
-    prediction = float(model.predict(scaled)[0])
+    raw_prediction = float(model.predict(scaled)[0])
+    
+    # In linear regression, extreme low values can yield negative predictions;
+    # electricity bills cannot realistically be below 0.
+    predicted_bill = max(0.0, round(raw_prediction, 2))
 
     return PredictionResponse(
-        predicted_bill=round(prediction, 2),
+        predicted_bill=predicted_bill,
         derived_season=derive_season(req.month),
         derived_heavy_appliances=row["HeavyAppliances"],
         derived_total_appliances_usage=row["TotalAppliances_Usage"],
     )
+
+
+# Mount static production frontend build if available
+frontend_candidates = [
+    Path(__file__).resolve().parent.parent.parent / "frontend" / "dist",
+    Path("frontend/dist").resolve(),
+    Path("dist").resolve(),
+]
+
+for dist_path in frontend_candidates:
+    if dist_path.exists() and (dist_path / "index.html").exists():
+        app.mount("/", StaticFiles(directory=str(dist_path), html=True), name="static")
+        break
+
