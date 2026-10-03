@@ -1,115 +1,182 @@
-# ⚡ Electricity Bill Predictor - Machine Learning Web App
+# ⚡ Electricity Bill Predictor
 
-A full-stack, production-ready Machine Learning web application that predicts domestic monthly electricity bills based on household appliance usage, operational hours, tariff rates, season, and geography across India.
+[![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-18.x-61DAFB?logo=react&logoColor=black)](https://react.dev/)
+[![Scikit-Learn](https://img.shields.io/badge/scikit--learn-1.6.1-F7931E?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![Vite](https://img.shields.io/badge/Vite-5.x-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Backed by a **Linear Regression model** + **StandardScaler** trained on 58 engineered features (appliances, seasonal one-hot encoding, 16 cities, and 32 electricity discoms).
-
----
-
-## 🌟 Key Features
-
-- **Accurate ML Prediction**: Utilizes Scikit-learn Linear Regression fitted on actual Indian domestic power consumption patterns.
-- **⚡ 1-Click Household Presets**: Instantly populate realistic values with:
-  - 🏠 **1 BHK Apartment**
-  - 🏢 **2 BHK Family Home**
-  - 🏡 **3 BHK Luxury Residence**
-  - 💼 **Small Office / Commercial**
-- **📊 Smart Energy Insights**: Automatic calculation of Heavy Appliance Index, Seasonal impact, and personalized electricity-saving recommendations.
-- **📋 Copy Summary**: Easily copy the forecast breakdown directly to your clipboard.
-- **🛡️ Production Safeguards**: Clamped against negative linear intercepts, cross-origin resource sharing (CORS) enabled, and automated startup schema verification.
-- **🚀 Unified Full-Stack Architecture**: FastAPI automatically serves the pre-built React production frontend — meaning the entire application runs as a **single, unified service** on any cloud provider!
+An end-to-end Machine Learning web application designed to forecast monthly domestic electricity bills based on household appliance usage, operational hours, tariff slabs, seasonal factors, and regional distribution companies across India.
 
 ---
 
-## 🏗️ Architecture & Layout
+## 📌 Project Overview
+
+Electricity consumption varies significantly across households depending on the quantity of heavy appliances (such as air conditioners and refrigerators), daily operating hours, seasonal weather conditions, and state electricity tariffs.
+
+This project bridges data science and interactive software by training a **Linear Regression** model on domestic power consumption patterns and serving it through an intuitive, real-time web application.
+
+---
+
+## 🎯 Key Highlights
+
+- **Linear Regression Pipeline**: Trained using Scikit-Learn with feature standardization via `StandardScaler`.
+- **58 Feature Encoding**: Incorporates continuous appliance variables, engineered interaction features, seasonal one-hot encoding, 16 Indian cities, and 32 electricity discoms.
+- **Smart Preprocessing**: Strictly replicates the training feature alignment directly from the serialized scaler schema (`scaler.feature_names_in_`).
+- **Interactive UI with Quick Presets**: Built with React and Vite, featuring one-click household presets (1 BHK, 2 BHK, 3 BHK, Office) for quick scenario analysis.
+- **Energy Efficiency Recommendations**: Generates actionable insights based on heavy appliance ownership to help users reduce their monthly consumption.
+- **Production-Ready API**: High-performance FastAPI backend with automatic schema validation and interactive Swagger documentation.
+
+---
+
+## 🧠 Machine Learning Details
+
+### 1. Features & Engineering
+The model operates on **58 input features**:
+- **Appliance Counts**: Fans, Refrigerators, Air Conditioners, Televisions, Monitors.
+- **Usage & Economics**: Monthly operational hours, Tariff rate (₹/kWh).
+- **Engineered Features**:
+  - `HeavyAppliances` = $Refrigerator + AirConditioner$
+  - `TotalAppliances_Usage` = $\sum(Appliances) \times MonthlyHours$
+- **Seasonal Categorization**: Derived from billing month (Summer, Winter, Post-Winter) with one-hot dummy encoding.
+- **Geographic & Discom Encoding**: One-hot encoded across 16 major Indian cities and 32 electricity distribution companies (e.g., Tata Power, Adani Power, BSES, BESCOM, etc.).
+
+### 2. Model & Preprocessing Pipeline
+- **Scaler**: `StandardScaler` fitted on continuous and one-hot features.
+- **Estimator**: `LinearRegression` with fitted intercept and coefficients.
+- **Artifacts**: Serialized using Joblib (`electricity_bill_linear.pkl`, `electricity_bill_scaler.pkl`).
+
+---
+
+## 🛠️ Tech Stack
+
+- **Machine Learning**: Scikit-learn, Pandas, NumPy, Joblib
+- **Backend**: FastAPI, Uvicorn, Pydantic
+- **Frontend**: React, Vite, Modern CSS (Glassmorphism & Responsive Design)
+- **Tooling**: Git, Python 3.12, Node.js
+
+---
+
+## 📂 Project Architecture
 
 ```
 electricity-app/
 ├── backend/
 │   ├── app/
-│   │   ├── main.py                  FastAPI server (serves API & static frontend)
-│   │   ├── schemas.py               Pydantic validation schemas
+│   │   ├── main.py                  # FastAPI application & route handlers
+│   │   ├── schemas.py               # Pydantic data validation models
 │   │   └── model/
-│   │       ├── feature_schema.py    Ground-truth 58-column layout & discom mapping
-│   │       ├── preprocessing.py     Feature engineering & one-hot vectorization
-│   │       ├── model_loader.py      Loads .pkl models and verifies integrity
+│   │       ├── feature_schema.py    # 58-feature schema & discom mappings
+│   │       ├── preprocessing.py     # Feature engineering & vectorization
+│   │       ├── model_loader.py      # Artifact loading & startup verification
 │   │       ├── electricity_bill_linear.pkl
 │   │       └── electricity_bill_scaler.pkl
-│   └── requirements.txt
+│   └── requirements.txt             # Python dependencies
 ├── frontend/
 │   ├── src/
-│   │   ├── App.jsx                  Modern React UI with Presets & Insights
-│   │   ├── index.css                Glassmorphic responsive styles
-│   │   └── main.jsx
+│   │   ├── App.jsx                  # Main application component & presets
+│   │   ├── index.css                # Custom responsive design system
+│   │   └── main.jsx                 # React root
 │   ├── package.json
-│   ├── vite.config.js
-│   └── dist/                        Pre-built production assets
-├── Dockerfile                       Multi-stage container for 1-click cloud deployment
-├── render.yaml                      Configuration for Render.com
+│   └── vite.config.js
 └── README.md
 ```
 
 ---
 
-## 🚀 How to Run Locally
+## 💻 Getting Started
 
-### Option 1: Unified Full-Stack (Single Command)
-Since the React frontend is pre-built into `frontend/dist`, you can run the entire web application with just Python:
+### Prerequisites
+- Python 3.10+
+- Node.js 18+ and npm
 
+### 1. Clone the Repository
 ```bash
-# From electricity-app directory
-pip install -r backend/requirements.txt
-python -m uvicorn backend.app.main:app --reload --port 8000
+git clone https://github.com/Prakhar-246/Electricity-Bill-Prediction---Linear-Regression.git
+cd Electricity-Bill-Prediction---Linear-Regression
 ```
-Open **`http://localhost:8000`** in your browser — both the React UI and API will run together!
-Interactive API Docs: `http://localhost:8000/docs`
 
----
-
-### Option 2: Full Development Mode (React HMR + FastAPI)
-
-1. **Start Backend**:
-   ```bash
-   cd backend
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-2. **Start Frontend**:
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   Open **`http://localhost:5173`** for hot-reloading development.
-
----
-
-## 🌐 How to Convert into a Free Live URL
-
-You can host this project completely free using any of the following platforms:
-
-### Method 1: Render.com (Recommended - 100% Free)
-1. Go to [render.com](https://render.com) and sign in with GitHub.
-2. Click **New +** > **Web Service**.
-3. Select your repository: `Electricity-Bill-Prediction---Linear-Regression`.
-4. Configure:
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r backend/requirements.txt`
-   - **Start Command**: `uvicorn backend.app.main:app --host 0.0.0.0 --port $PORT`
-5. Click **Create Web Service**. Within 2-3 minutes, Render will assign you a live HTTPS URL (e.g. `https://electricity-bill-predictor.onrender.com`).
-
----
-
-### Method 2: Hugging Face Spaces (Instant Free ML Hosting)
-1. Go to [huggingface.co/spaces](https://huggingface.co/spaces) and click **Create new Space**.
-2. Select **Docker** as the SDK.
-3. Link your GitHub repo or push this repository.
-4. Hugging Face will automatically use the included `Dockerfile` to build and give you an instant live URL.
-
----
-
-## 🧪 Automated Testing
-
-To run the verification test suite:
+### 2. Backend Setup
 ```bash
-python -c "from fastapi.testclient import TestClient; from backend.app.main import app; client = TestClient(app); assert client.get('/health').status_code == 200; print('All tests passed!')"
+cd backend
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
 ```
+Interactive API docs will be available at: `http://localhost:8000/docs`
+
+### 3. Frontend Setup
+In a new terminal:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open `http://localhost:5173` in your browser.
+
+---
+
+## 🔌 API Reference
+
+### 1. Health Check
+```http
+GET /health
+```
+**Response**:
+```json
+{
+  "status": "ok",
+  "message": "Electricity Bill Prediction API is healthy"
+}
+```
+
+### 2. Available Options
+```http
+GET /options
+```
+Returns lists of cities and distribution companies recognized by the trained model.
+
+### 3. Predict Electricity Bill
+```http
+POST /predict
+Content-Type: application/json
+```
+**Request Body**:
+```json
+{
+  "fan": 4,
+  "refrigerator": 1,
+  "air_conditioner": 1,
+  "television": 2,
+  "monitor": 1,
+  "month": 6,
+  "monthly_hours": 300,
+  "tariff_rate": 7.5,
+  "city": "Mumbai",
+  "company": "Tata Power Company Ltd."
+}
+```
+
+**Response**:
+```json
+{
+  "predicted_bill": 2485.50,
+  "derived_season": "Summer",
+  "derived_heavy_appliances": 2.0,
+  "derived_total_appliances_usage": 2700.0
+}
+```
+
+---
+
+## 📜 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
